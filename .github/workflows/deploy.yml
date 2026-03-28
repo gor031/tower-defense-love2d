@@ -26,8 +26,12 @@ jobs:
         run: npm install -g love.js
 
       - name: Build game
-        # -t: Title, -m: Memory limit, -c: Compatibility mode (No SharedArrayBuffer)
-        run: love.js . dist -t "Tower Defense Mobile" -m 128000000 -c
+        run: love.js . dist -t "Tower Defense Mobile" -m 128000000
+
+      - name: Inject COOP/COEP service worker
+        run: |
+          cp coi-serviceworker.js dist/coi-serviceworker.js
+          sed -i 's|<head>|<head><script src="coi-serviceworker.js"></script>|' dist/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
