@@ -34,11 +34,12 @@ jobs:
           cp lovejs-player/nogame.love dist/
           cp -r lovejs-player/11.5 dist/11.5
           # Copy our game
-          cp game.love dist/game.love
+          ZIP_NAME="game_${GITHUB_SHA::7}.love"
+          cp game.love dist/$ZIP_NAME
           # Copy service worker for COOP/COEP headers
           cp coi-serviceworker.js dist/coi-serviceworker.js
           # Create index.html
-          cat > dist/index.html << 'EOF'
+          cat > dist/index.html << EOF
           <!DOCTYPE html>
           <html>
           <head>
@@ -49,7 +50,7 @@ jobs:
             <link rel="stylesheet" href="style.css">
           </head>
           <body>
-            <script src="player.js?g=game.love&v=11.5"></script>
+            <script src="player.js?g=${ZIP_NAME}&v=11.5"></script>
           </body>
           </html>
           EOF
