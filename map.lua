@@ -119,28 +119,30 @@ function Map.draw()
         local bIdx = Game.branchIndex
         local bPoint = firstPath[bIdx]
         
+        local function safeUnpack(t) return (table.unpack or _G.unpack)(t) end
+        
         -- 바닥층
         love.graphics.setLineWidth(50)
         love.graphics.setColor(0.4, 0.3, 0.2)
         local commonPart = {}
         for i=1, bIdx do table.insert(commonPart, firstPath[i].x); table.insert(commonPart, firstPath[i].y) end
-        if #commonPart >= 4 then love.graphics.line(unpack(commonPart)) end
+        if #commonPart >= 4 then love.graphics.line(safeUnpack(commonPart)) end
         love.graphics.circle("fill", bPoint.x, bPoint.y, 25)
         for _, path in ipairs(Game.paths) do
             local div = {}
             for i=bIdx, #path do table.insert(div, path[i].x); table.insert(div, path[i].y) end
-            if #div >= 4 then love.graphics.line(unpack(div)) end
+            if #div >= 4 then love.graphics.line(safeUnpack(div)) end
         end
         
         -- 위층
         love.graphics.setLineWidth(40)
         love.graphics.setColor(0.5, 0.4, 0.3)
-        if #commonPart >= 4 then love.graphics.line(unpack(commonPart)) end
+        if #commonPart >= 4 then love.graphics.line(safeUnpack(commonPart)) end
         love.graphics.circle("fill", bPoint.x, bPoint.y, 20)
         for _, path in ipairs(Game.paths) do
             local div = {}
             for i=bIdx, #path do table.insert(div, path[i].x); table.insert(div, path[i].y) end
-            if #div >= 4 then love.graphics.line(unpack(div)) end
+            if #div >= 4 then love.graphics.line(safeUnpack(div)) end
         end
     end
     
