@@ -31,10 +31,10 @@ function love.load()
     -- 웹 호환성이 더 좋은 랜덤 시드 설정
     math.randomseed(love.timer.getTime() * 1000)
     
-    -- [임시 디버깅] 폰트 로딩을 주석 처리하여 폰트 문제인지 확인합니다.
-    -- local fontPath = "malgun.ttf"
-    -- local font = love.graphics.newFont(fontPath, 16)
-    -- love.graphics.setFont(font)
+    -- 한글 폰트 설정 복구
+    local fontPath = "malgun.ttf"
+    local font = love.graphics.newFont(fontPath, 16)
+    love.graphics.setFont(font)
     
     -- 맵 초기화 (기본 슬롯 및 경로 생성)
     Map.init()
