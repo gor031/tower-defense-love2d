@@ -49,6 +49,25 @@ jobs:
             <title>Tower Defense Mobile</title>
             <script src="coi-serviceworker.js"></script>
             <link rel="stylesheet" href="style.css">
+            <style>
+              body, html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                overflow: hidden;
+              }
+              canvas {
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                object-fit: contain !important;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+              }
+            </style>
           </head>
           <body>
             <script src="player.js?g=${ZIP_NAME}&v=11.5"></script>
