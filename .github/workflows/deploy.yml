@@ -33,6 +33,7 @@ jobs:
           cp lovejs-player/style.css dist/
           cp lovejs-player/nogame.love dist/
           cp -r lovejs-player/11.5 dist/11.5
+          cp -r lovejs-player/lua dist/lua
           # Copy our game
           ZIP_NAME="game_${GITHUB_SHA::7}.love"
           cp game.love dist/$ZIP_NAME
