@@ -31,9 +31,9 @@ function love.load()
     -- 웹 호환성이 더 좋은 랜덤 시드 설정
     math.randomseed(love.timer.getTime() * 1000)
     
-    -- 한글 폰트 설정 복구
-    local fontPath = "malgun.ttf"
-    local font = love.graphics.newFont(fontPath, 16)
+    -- 웹 환경에서 13MB 폰트는 메모리 초과를 일으키므로 기본 폰트 사용
+    -- TODO: 경량 한글 폰트로 교체 예정
+    local font = love.graphics.newFont(14)
     love.graphics.setFont(font)
     
     -- 맵 초기화 (기본 슬롯 및 경로 생성)
