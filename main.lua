@@ -43,34 +43,40 @@ function love.load()
     UI.init()
 end
 
--- [디버깅 도구] 에러 발생 시 화면에 빨간 글씨로 에러 내용을 표시합니다.
+-- [디버깅 도구] 웹 호환 에러 핸들러
 function love.errorhandler(msg)
-    if luvit then return end
-    if not love.window or not love.graphics or not love.event then return end
-
-    if not love.graphics.isCreated() or not love.window.isOpen() then
-        local success, status = pcall(love.window.setMode, 800, 600)
-        if not success or not status then return end
-    end
-
-    love.graphics.setCanvas()
-    love.graphics.setOrigin()
-    love.graphics.clear(0.1, 0.1, 0.1)
-
-    local trace = debug.traceback()
-    local full_error = "Error: " .. tostring(msg) .. "\n\n" .. trace
-
+    local trace = debug.traceback("", 2) or ""
+    local full_error = "Error: " .. tostring(msg) .. "\n\n" .. tostring(trace)
+    print(full_error) -- 브라우저 콘솔에 출력
+    
     return function()
+        if not love.event or not love.graphics then return 1 end
         love.event.pump()
-        for e, a, b, c in love.event.poll() do
+        for e in love.event.poll() do
             if e == "quit" then return 1 end
         end
-
-        love.graphics.clear(0.1, 0.1, 0.1)
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.printf(full_error, 20, 20, love.graphics.getWidth() - 40)
+        
+        love.graphics.clear(0.15, 0.05, 0.05)
+        love.graphics.setColor(1, 0.3, 0.3)
+        love.graphics.printf(full_error, 10, 10, love.graphics.getWidth() - 20)
         love.graphics.present()
     end
+end
+
+-- 게임 상태 초기화 함수 (웹에서는 quit/restart가 안 되므로)
+local function resetGame()
+    Game.money = 500
+    Game.baseHealth = 100
+    Game.wave = 1
+    Game.enemies = {}
+    Game.turrets = {}
+    Game.effects = {}
+    Game.particles = {}
+    Game.shopPage = 1
+    Game.selectedTurret = nil
+    Game.buildMode = { active = false, typeIdx = nil }
+    Game.state = "PLAYING"
+    Map.init()
 end
 
 function love.update(dt)
@@ -151,7 +157,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if Game.state == "GAMEOVER" then
-        love.event.quit("restart")
+        resetGame()
         return
     end
 
