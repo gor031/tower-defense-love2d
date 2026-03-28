@@ -28,19 +28,49 @@ function love.load()
     love.window.setMode(Game.width, Game.height, {resizable=true, vsync=true})
     love.window.setTitle("터렛 디펜스 모바일")
     
-    -- 매번 다른 랜덤값이 나오도록 시드 설정
-    math.randomseed(os.time())
+    -- 웹 호환성이 더 좋은 랜덤 시드 설정
+    math.randomseed(love.timer.getTime() * 1000)
     
-    -- 한글 폰트 설정 (프로젝트 폴더에 복사된 폰트 활용)
-    local fontPath = "malgun.ttf"
-    local font = love.graphics.newFont(fontPath, 16)
-    love.graphics.setFont(font)
+    -- [임시 디버깅] 폰트 로딩을 주석 처리하여 폰트 문제인지 확인합니다.
+    -- local fontPath = "malgun.ttf"
+    -- local font = love.graphics.newFont(fontPath, 16)
+    -- love.graphics.setFont(font)
     
     -- 맵 초기화 (기본 슬롯 및 경로 생성)
     Map.init()
     
     -- UI 초기화
     UI.init()
+end
+
+-- [디버깅 도구] 에러 발생 시 화면에 빨간 글씨로 에러 내용을 표시합니다.
+function love.errorhandler(msg)
+    if luvit then return end
+    if not love.window or not love.graphics or not love.event then return end
+
+    if not love.graphics.isCreated() or not love.window.isOpen() then
+        local success, status = pcall(love.window.setMode, 800, 600)
+        if not success or not status then return end
+    end
+
+    love.graphics.setCanvas()
+    love.graphics.setOrigin()
+    love.graphics.clear(0.1, 0.1, 0.1)
+
+    local trace = debug.traceback()
+    local full_error = "Error: " .. tostring(msg) .. "\n\n" .. trace
+
+    return function()
+        love.event.pump()
+        for e, a, b, c in love.event.poll() do
+            if e == "quit" then return 1 end
+        end
+
+        love.graphics.clear(0.1, 0.1, 0.1)
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.printf(full_error, 20, 20, love.graphics.getWidth() - 40)
+        love.graphics.present()
+    end
 end
 
 function love.update(dt)
