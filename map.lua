@@ -77,9 +77,9 @@ end
 
 -- 해당 위치에 터렛 설치 가능한지 확인
 function Map.isValidPlacement(x, y)
-    -- 1. 화면 밖인지 확인
-    if x < 40 or x > Game.width - 40 or y < 40 or y > Game.height - 200 then
-        return false, "화면 끝에는 지을 수 없습니다."
+    -- 1. 월드 맵 한계인지 확인 (오프셋 감안)
+    if x < -500 or x > 1500 or y < -500 or y > 1500 then
+        return false, "맵 끝에는 지을 수 없습니다."
     end
 
     -- 2. 길 위에 있는지 확인

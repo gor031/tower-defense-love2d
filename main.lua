@@ -16,7 +16,18 @@ Game = {
     buildMode = { active = false, typeIdx = nil }, -- 빌드 모드 상태
     state = "PLAYING",
     width = 800,
-    height = 600
+    height = 600,
+    cameraX = 0,
+    cameraY = 0,
+    cameraScale = 1,
+    isDragging = false,
+    dragStartX = 0,
+    dragStartY = 0,
+    dragCameraStartX = 0,
+    dragCameraStartY = 0,
+    hasDragged = false,
+    initialPinchDist = nil,
+    initialPinchScale = nil
 }
 
 local turretClasses = require("turret_types")
@@ -79,6 +90,12 @@ local function resetGame()
     Game.selectedTurret = nil
     Game.buildMode = { active = false, typeIdx = nil }
     Game.state = "PLAYING"
+    Game.cameraX = 0
+    Game.cameraY = 0
+    Game.cameraScale = 1
+    Game.isDragging = false
+    Game.hasDragged = false
+    Game.initialPinchDist = nil
     Map.init()
 end
 
@@ -124,6 +141,11 @@ function love.update(dt)
 end
 
 function love.draw()
+    -- 카메라 변환 적용
+    love.graphics.push()
+    love.graphics.scale(Game.cameraScale, Game.cameraScale)
+    love.graphics.translate(-Game.cameraX, -Game.cameraY)
+
     -- 배경
     love.graphics.clear(0.1, 0.1, 0.1)
     
@@ -146,6 +168,8 @@ function love.draw()
         love.graphics.circle("fill", p.x, p.y, p.size)
     end
     
+    love.graphics.pop()
+    
     -- UI (상단 정보, 하단 메뉴 등)
     UI.clearButtons() -- 매 프레임 버튼 목록 초기화 (draw에서 새로 생성)
     UI.draw()
@@ -164,25 +188,109 @@ function love.mousepressed(x, y, button, istouch)
         return
     end
 
-    -- 1. UI 터미널(버튼) 클릭 확인
+    -- 1. UI 터미널(버튼) 클릭 확인 (스크린 좌표 사용)
     if UI.touch(x, y) then
         return
     end
     
+    -- 핀치 투 줌인지 확인
+    local touches = love.touch.getTouches()
+    if #touches >= 2 then
+        Game.isDragging = false
+        Game.hasDragged = false
+        return
+    end
+    
+    -- 빈 공간이면 드래그 시작 설정
+    Game.isDragging = true
+    Game.dragStartX = x
+    Game.dragStartY = y
+    Game.dragCameraStartX = Game.cameraX
+    Game.dragCameraStartY = Game.cameraY
+    Game.hasDragged = false
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+    -- 멀티터치 핀치 투 줌 로직
+    local touches = love.touch.getTouches()
+    if #touches >= 2 then
+        local id1, id2 = touches[1], touches[2]
+        local x1, y1 = love.touch.getPosition(id1)
+        local x2, y2 = love.touch.getPosition(id2)
+        local dist = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+        
+        if not Game.initialPinchDist then
+            Game.initialPinchDist = dist
+            Game.initialPinchScale = Game.cameraScale
+        elseif dist > 0 then
+            local scaleRatio = dist / Game.initialPinchDist
+            local newScale = Game.initialPinchScale * scaleRatio
+            Game.cameraScale = math.max(0.5, math.min(2.5, newScale))
+        end
+        return
+    else
+        Game.initialPinchDist = nil
+    end
+
+    if Game.isDragging then
+        -- 마우스 이동 시 드래그 동작인지 클릭 오차인지 판별
+        local dist = math.sqrt((x - Game.dragStartX)^2 + (y - Game.dragStartY)^2)
+        if dist > 10 then
+            Game.hasDragged = true
+        end
+        
+        -- 카메라 이동
+        local dWX = (x - Game.dragStartX) / Game.cameraScale
+        local dWY = (y - Game.dragStartY) / Game.cameraScale
+        
+        Game.cameraX = Game.dragCameraStartX - dWX
+        Game.cameraY = Game.dragCameraStartY - dWY
+    end
+end
+
+function love.wheelmoved(x, y)
+    if y > 0 then
+        Game.cameraScale = math.min(2.5, Game.cameraScale + 0.1)
+    elseif y < 0 then
+        Game.cameraScale = math.max(0.5, Game.cameraScale - 0.1)
+    end
+end
+
+function love.mousereleased(x, y, button, istouch)
+    if Game.initialPinchDist then
+        Game.initialPinchDist = nil
+        return
+    end
+
+    if Game.isDragging then
+        Game.isDragging = false
+        if Game.hasDragged then
+            return -- 드래그를 한 경우 아래의 클릭, 건설, 선택 무시
+        end
+    end
+    
+    if Game.state == "GAMEOVER" then return end
+    
+    -- UI 버튼은 놓을때가 아닌 누를 때 인식되게끔 위에 있지만 만약을 위해 블락
+    if y > Game.height - 180 or y < 40 then
+        return
+    end
+    
+    -- 월드 좌표로 변환 (역산)
+    local worldX = (x / Game.cameraScale) + Game.cameraX
+    local worldY = (y / Game.cameraScale) + Game.cameraY
+
     -- 2. 빌드 모드일 때 배치 확인
     if Game.buildMode.active then
-        local canPlace, msg = Map.isValidPlacement(x, y)
+        local canPlace, msg = Map.isValidPlacement(worldX, worldY)
         if canPlace then
             local typeIdx = Game.buildMode.typeIdx
             local cost = turretClasses.types[typeIdx].cost
             if Game.money >= cost then
                 Game.money = Game.money - cost
-                local newT = turretClasses.Turret.new(typeIdx, x, y)
+                local newT = turretClasses.Turret.new(typeIdx, worldX, worldY)
                 table.insert(Game.turrets, newT)
-                -- 연속 설치를 위해 빌드 모드 유지 (원하면 끌 수 있음)
             end
-        else
-            -- 설치 불가 메시지 이펙트 (선택사항)
         end
         return
     end
@@ -190,7 +298,7 @@ function love.mousepressed(x, y, button, istouch)
     -- 3. 기존 터렛 선택 확인
     Game.selectedTurret = nil
     for _, t in ipairs(Game.turrets) do
-        local d = math.sqrt((x - t.x)^2 + (y - t.y)^2)
+        local d = math.sqrt((worldX - t.x)^2 + (worldY - t.y)^2)
         if d < 30 then
             Game.selectedTurret = t
             break
