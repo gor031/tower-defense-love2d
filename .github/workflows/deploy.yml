@@ -17,21 +17,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Clone 2dengine/love.js player
+        run: git clone https://github.com/2dengine/love.js.git lovejs-player
 
-      - name: Install love.js
-        run: npm install -g love.js
-
-      - name: Build game
-        run: love.js . dist -t "Tower Defense Mobile" -m 128000000
-
-      - name: Inject COOP/COEP service worker
+      - name: Package game as .love file
         run: |
+          cd $GITHUB_WORKSPACE
+          zip -r game.love *.lua -x "*.git*"
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p dist
+          # Copy love.js player files
+          cp lovejs-player/player.js dist/
+          cp lovejs-player/style.css dist/
+          cp lovejs-player/nogame.love dist/
+          cp -r lovejs-player/11.5 dist/11.5
+          # Copy our game
+          cp game.love dist/game.love
+          # Copy service worker for COOP/COEP headers
           cp coi-serviceworker.js dist/coi-serviceworker.js
-          sed -i 's|<head>|<head><script src="coi-serviceworker.js"></script>|' dist/index.html
+          # Create index.html
+          cat > dist/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <title>Tower Defense Mobile</title>
+            <script src="coi-serviceworker.js"></script>
+            <link rel="stylesheet" href="style.css">
+          </head>
+          <body>
+            <script src="player.js?g=game.love&v=11.5"></script>
+          </body>
+          </html>
+          EOF
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

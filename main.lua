@@ -31,10 +31,13 @@ function love.load()
     -- 웹 호환성이 더 좋은 랜덤 시드 설정
     math.randomseed(love.timer.getTime() * 1000)
     
-    -- 웹 환경에서 13MB 폰트는 메모리 초과를 일으키므로 기본 폰트 사용
-    -- TODO: 경량 한글 폰트로 교체 예정
-    local font = love.graphics.newFont(14)
-    love.graphics.setFont(font)
+    -- 한글 폰트 설정 (2dengine player는 대용량 폰트도 지원)
+    local fontOk, font = pcall(love.graphics.newFont, "malgun.ttf", 16)
+    if fontOk then
+        love.graphics.setFont(font)
+    else
+        love.graphics.setFont(love.graphics.newFont(14))
+    end
     
     -- 맵 초기화 (기본 슬롯 및 경로 생성)
     Map.init()
