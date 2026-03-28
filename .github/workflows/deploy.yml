@@ -23,7 +23,7 @@ jobs:
       - name: Package game as .love file
         run: |
           cd $GITHUB_WORKSPACE
-          zip -r game.love *.lua -x "*.git*"
+          zip -r game.love . -x "*.git*" -x "dist/*" -x "lovejs-player/*" -x "*.love"
 
       - name: Prepare deployment directory
         run: |

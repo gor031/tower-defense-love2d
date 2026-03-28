@@ -31,8 +31,8 @@ function love.load()
     -- 웹 호환성이 더 좋은 랜덤 시드 설정
     math.randomseed(love.timer.getTime() * 1000)
     
-    -- 한글 폰트 설정 (2dengine player는 대용량 폰트도 지원)
-    local fontOk, font = pcall(love.graphics.newFont, "malgun.ttf", 16)
+    -- 가벼운 한글 폰트(nanum.ttf) 사용
+    local fontOk, font = pcall(love.graphics.newFont, "nanum.ttf", 16)
     if fontOk then
         love.graphics.setFont(font)
     else
